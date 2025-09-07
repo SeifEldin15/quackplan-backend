@@ -1,0 +1,656 @@
+{
+  "info": {
+    "name": "QuackPlan API",
+    "description": "Event planning and booking system API documentation",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Check if the API is running and healthy"
+      },
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"status\": \"OK\",\n    \"message\": \"QuackPlan API is running!\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?isVendor=true&limit=10&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "isVendor",
+                  "value": "true",
+                  "description": "Filter by vendor status (true/false)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page (default: 20)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                }
+              ]
+            },
+            "description": "Retrieve all users with optional filtering and pagination"
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}"]
+            },
+            "description": "Retrieve a specific user by their ID"
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authProviderId\": \"auth-123\",\n  \"profile\": {\n    \"fullName\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1234567890\",\n    \"dob\": \"1990-01-01\",\n    \"location\": \"New York, NY\",\n    \"isVendor\": true,\n    \"academyName\": \"John's Fitness Studio\",\n    \"specializations\": [\"fitness\", \"yoga\", \"pilates\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            },
+            "description": "Create a new user profile"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profile\": {\n    \"fullName\": \"John Doe Updated\",\n    \"phone\": \"+1987654321\",\n    \"location\": \"Los Angeles, CA\",\n    \"rating\": 4.5\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}"]
+            },
+            "description": "Update an existing user's profile"
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}"]
+            },
+            "description": "Delete a user account"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events?status=published&visibility=public&tags=yoga,fitness&startDate=2025-09-01&endDate=2025-09-30&limit=10&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "published",
+                  "description": "Filter by event status (draft/published/cancelled)"
+                },
+                {
+                  "key": "visibility",
+                  "value": "public",
+                  "description": "Filter by visibility (public/unlisted/private)"
+                },
+                {
+                  "key": "tags",
+                  "value": "yoga,fitness",
+                  "description": "Filter by tags (comma-separated)"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2025-09-01",
+                  "description": "Filter events starting after this date"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-09-30",
+                  "description": "Filter events starting before this date"
+                },
+                {
+                  "key": "vendorId",
+                  "value": "",
+                  "description": "Filter by vendor ID",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Text search in title, description, and tags",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page (default: 20)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                }
+              ]
+            },
+            "description": "Retrieve all events with filtering and pagination options"
+          }
+        },
+        {
+          "name": "Get Event by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events", "{{eventId}}"]
+            },
+            "description": "Retrieve a specific event by its ID with vendor details"
+          }
+        },
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendorId\": \"{{vendorId}}\",\n  \"title\": \"Morning Yoga Session\",\n  \"description\": \"Start your day with a relaxing yoga session suitable for all levels\",\n  \"location\": \"Central Park, New York\",\n  \"startsAt\": \"2025-09-15T08:00:00Z\",\n  \"endsAt\": \"2025-09-15T09:30:00Z\",\n  \"capacity\": 25,\n  \"priceCents\": 3000,\n  \"visibility\": \"public\",\n  \"status\": \"published\",\n  \"tags\": [\"yoga\", \"morning\", \"beginner-friendly\"],\n  \"coverUrl\": \"https://example.com/yoga-cover.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events"]
+            },
+            "description": "Create a new event"
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Morning Yoga Session\",\n  \"description\": \"Updated description for the yoga session\",\n  \"capacity\": 30,\n  \"priceCents\": 2500,\n  \"status\": \"published\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events", "{{eventId}}"]
+            },
+            "description": "Update an existing event"
+          }
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events", "{{eventId}}"]
+            },
+            "description": "Delete an event"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Get All Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings?eventId={{eventId}}&userId={{userId}}&status=confirmed&limit=10&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings"],
+              "query": [
+                {
+                  "key": "eventId",
+                  "value": "{{eventId}}",
+                  "description": "Filter by event ID"
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "Filter by user ID"
+                },
+                {
+                  "key": "status",
+                  "value": "confirmed",
+                  "description": "Filter by booking status (confirmed/waitlisted/cancelled/noshow/checked_in)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page (default: 20)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                }
+              ]
+            },
+            "description": "Retrieve all bookings with filtering options"
+          }
+        },
+        {
+          "name": "Get Booking by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings", "{{bookingId}}"]
+            },
+            "description": "Retrieve a specific booking by its ID"
+          }
+        },
+        {
+          "name": "Book Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"userId\": \"{{userId}}\",\n  \"paymentRef\": \"payment-xyz-789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings"]
+            },
+            "description": "Create a new booking for an event. Uses the bookEvent service with automatic capacity management and waitlisting."
+          }
+        },
+        {
+          "name": "Update Booking Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"checked_in\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings", "{{bookingId}}"]
+            },
+            "description": "Update booking status (confirmed/waitlisted/cancelled/noshow/checked_in)"
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"byUserId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings", "{{bookingId}}"]
+            },
+            "description": "Cancel a booking. Uses the cancelBooking service which automatically promotes waitlisted users."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Personal Events",
+      "item": [
+        {
+          "name": "Get Personal Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personal-events?userId={{userId}}&startDate=2025-09-01&endDate=2025-09-30&limit=10&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personal-events"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "User ID (required)"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2025-09-01",
+                  "description": "Filter events starting after this date"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-09-30",
+                  "description": "Filter events starting before this date"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page (default: 20)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                }
+              ]
+            },
+            "description": "Retrieve personal calendar events for a specific user"
+          }
+        },
+        {
+          "name": "Get Personal Event by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personal-events/{{personalEventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personal-events", "{{personalEventId}}"]
+            },
+            "description": "Retrieve a specific personal event by its ID"
+          }
+        },
+        {
+          "name": "Create Personal Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"title\": \"Doctor Appointment\",\n  \"startsAt\": \"2025-09-20T14:00:00Z\",\n  \"endsAt\": \"2025-09-20T15:00:00Z\",\n  \"notes\": \"Annual checkup with Dr. Smith\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/personal-events",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personal-events"]
+            },
+            "description": "Create a new personal calendar event"
+          }
+        },
+        {
+          "name": "Update Personal Event",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Doctor Appointment\",\n  \"startsAt\": \"2025-09-20T15:00:00Z\",\n  \"endsAt\": \"2025-09-20T16:00:00Z\",\n  \"notes\": \"Rescheduled appointment with Dr. Smith\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/personal-events/{{personalEventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personal-events", "{{personalEventId}}"]
+            },
+            "description": "Update an existing personal event"
+          }
+        },
+        {
+          "name": "Delete Personal Event",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personal-events/{{personalEventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personal-events", "{{personalEventId}}"]
+            },
+            "description": "Delete a personal calendar event"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get All Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?userId={{userId}}&kind=email&sent=false&limit=10&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "Filter by user ID"
+                },
+                {
+                  "key": "kind",
+                  "value": "email",
+                  "description": "Filter by notification type (email/push/sms)"
+                },
+                {
+                  "key": "sent",
+                  "value": "false",
+                  "description": "Filter by sent status (true/false)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page (default: 20)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                }
+              ]
+            },
+            "description": "Retrieve notifications with filtering options"
+          }
+        },
+        {
+          "name": "Get Notification by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "{{notificationId}}"]
+            },
+            "description": "Retrieve a specific notification by its ID"
+          }
+        },
+        {
+          "name": "Create Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"kind\": \"email\",\n  \"payload\": {\n    \"subject\": \"Event Reminder\",\n    \"message\": \"Don't forget about your upcoming yoga class tomorrow!\",\n    \"eventId\": \"{{eventId}}\"\n  },\n  \"scheduledFor\": \"2025-09-14T18:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications"]
+            },
+            "description": "Create a new notification to be sent to a user"
+          }
+        },
+        {
+          "name": "Update Notification",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduledFor\": \"2025-09-14T19:00:00Z\",\n  \"payload\": {\n    \"subject\": \"Updated Event Reminder\",\n    \"message\": \"Reminder: Your yoga class is tomorrow at 9 AM!\",\n    \"eventId\": \"{{eventId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "{{notificationId}}"]
+            },
+            "description": "Update an existing notification"
+          }
+        },
+        {
+          "name": "Mark Notification as Sent",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}/mark-sent",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "{{notificationId}}", "mark-sent"]
+            },
+            "description": "Mark a notification as sent (updates sentAt timestamp)"
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "{{notificationId}}"]
+            },
+            "description": "Delete a notification"
+          }
+        }
+      ]
+    }
+  ]
+}
