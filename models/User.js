@@ -51,9 +51,6 @@ const UserSchema = new Schema({
   lastLogin: Date,
   isActive: { type: Boolean, default: true },
   
-  // Legacy field for backward compatibility
-  authProviderId: { type: String, index: true },
-  
   profile: ProfileSchema,
 }, { timestamps: true });
 
