@@ -1,10 +1,11 @@
 import express from 'express';
 import Event from '../models/Event.js';
+import { authenticate, requireVendor, optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // GET /api/events - Get all events with filtering
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { 
       vendorId, 
@@ -73,14 +74,20 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/events - Create new event
-router.post('/', async (req, res) => {
+// POST /api/events - Create new event (vendors only)
+router.post('/', authenticate, requireVendor, async (req, res) => {
   try {
-    const event = new Event(req.body);
+    // Set the vendorId to the authenticated user's ID
+    const eventData = {
+      ...req.body,
+      vendorId: req.user._id
+    };
+    
+    const event = new Event(eventData);
     await event.save();
     
     const populatedEvent = await Event.findById(event._id)
-      .populate('vendorId', 'profile.fullName profile.academyName profile.rating');
+      .populate('vendorId', 'profile.fullName profile.academyName profile.rating profile.verificationStatus');
     
     res.status(201).json(populatedEvent);
   } catch (error) {
@@ -88,33 +95,53 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/events/:id - Update event
-router.put('/:id', async (req, res) => {
+// PUT /api/events/:id - Update event (vendor who created it only)
+router.put('/:id', authenticate, requireVendor, async (req, res) => {
   try {
+    // First check if event exists and belongs to this vendor
+    const existingEvent = await Event.findById(req.params.id);
+    if (!existingEvent) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+    
+    if (existingEvent.vendorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ 
+        error: 'Access denied. You can only update your own events.',
+        code: 'UNAUTHORIZED_UPDATE'
+      });
+    }
+    
     const event = await Event.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     )
-    .populate('vendorId', 'profile.fullName profile.academyName profile.rating')
+    .populate('vendorId', 'profile.fullName profile.academyName profile.rating profile.verificationStatus')
     .select('-__v');
     
-    if (!event) {
-      return res.status(404).json({ error: 'Event not found' });
-    }
     res.json(event);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// DELETE /api/events/:id - Delete event
-router.delete('/:id', async (req, res) => {
+// DELETE /api/events/:id - Delete event (vendor who created it only)
+router.delete('/:id', authenticate, requireVendor, async (req, res) => {
   try {
-    const event = await Event.findByIdAndDelete(req.params.id);
-    if (!event) {
+    // First check if event exists and belongs to this vendor
+    const existingEvent = await Event.findById(req.params.id);
+    if (!existingEvent) {
       return res.status(404).json({ error: 'Event not found' });
     }
+    
+    if (existingEvent.vendorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ 
+        error: 'Access denied. You can only delete your own events.',
+        code: 'UNAUTHORIZED_DELETE'
+      });
+    }
+    
+    await Event.findByIdAndDelete(req.params.id);
     res.json({ message: 'Event deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });

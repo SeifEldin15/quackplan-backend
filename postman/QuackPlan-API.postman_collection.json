@@ -1,8 +1,8 @@
 {
   "info": {
     "name": "QuackPlan API",
-    "description": "Event planning and booking system API documentation",
-    "version": "1.0.0",
+    "description": "Complete event planning and booking system API with user registration, login, and role-based access control",
+    "version": "2.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,8 +10,24 @@
       "key": "baseUrl",
       "value": "http://localhost:3000",
       "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT token for authentication"
     }
   ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
   "item": [
     {
       "name": "Health Check",
@@ -24,74 +40,32 @@
           "path": ["health"]
         },
         "description": "Check if the API is running and healthy"
-      },
-      "response": [
-        {
-          "name": "Success",
-          "originalRequest": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["health"]
-            }
-          },
-          "status": "OK",
-          "code": 200,
-          "body": "{\n    \"status\": \"OK\",\n    \"message\": \"QuackPlan API is running!\"\n}"
-        }
-      ]
+      }
     },
     {
-      "name": "Users",
+      "name": "Authentication",
       "item": [
         {
-          "name": "Get All Users",
+          "name": "Register Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', response.token);",
+                  "    pm.collectionVariables.set('userId', response.user._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/users?isVendor=true&limit=10&page=1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users"],
-              "query": [
-                {
-                  "key": "isVendor",
-                  "value": "true",
-                  "description": "Filter by vendor status (true/false)"
-                },
-                {
-                  "key": "limit",
-                  "value": "10",
-                  "description": "Number of results per page (default: 20)"
-                },
-                {
-                  "key": "page",
-                  "value": "1",
-                  "description": "Page number (default: 1)"
-                }
-              ]
+            "auth": {
+              "type": "noauth"
             },
-            "description": "Retrieve all users with optional filtering and pagination"
-          }
-        },
-        {
-          "name": "Get User by ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/users/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "{{userId}}"]
-            },
-            "description": "Retrieve a specific user by their ID"
-          }
-        },
-        {
-          "name": "Create User",
-          "request": {
             "method": "POST",
             "header": [
               {
@@ -101,18 +75,111 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"authProviderId\": \"auth-123\",\n  \"profile\": {\n    \"fullName\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1234567890\",\n    \"dob\": \"1990-01-01\",\n    \"location\": \"New York, NY\",\n    \"isVendor\": true,\n    \"academyName\": \"John's Fitness Studio\",\n    \"specializations\": [\"fitness\", \"yoga\", \"pilates\"]\n  }\n}"
+              "raw": "{\n  \"email\": \"john.customer@example.com\",\n  \"password\": \"Password123\",\n  \"userType\": \"customer\",\n  \"profile\": {\n    \"fullName\": \"John Customer\",\n    \"phone\": \"+1234567890\",\n    \"location\": \"New York, NY\",\n    \"dob\": \"1990-01-01\"\n  }\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/users",
+              "raw": "{{baseUrl}}/api/auth/register",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "path": ["api", "auth", "register"]
             },
-            "description": "Create a new user profile"
+            "description": "Register a new customer account"
           }
         },
         {
-          "name": "Update User",
+          "name": "Register Vendor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('vendorToken', response.token);",
+                  "    pm.collectionVariables.set('vendorId', response.user._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"melissa.peters@soccergym.com\",\n  \"password\": \"SecurePass123\",\n  \"userType\": \"vendor\",\n  \"profile\": {\n    \"fullName\": \"Melissa Peters\",\n    \"phone\": \"+1 (305) 555-0188\",\n    \"location\": \"Miami, Florida – Downtown Sports Center\",\n    \"dob\": \"1995-05-23\",\n    \"academyName\": \"Soccer Academy\",\n    \"specializations\": [\"Soccer Academy\", \"Soccer Training\", \"Swimming Classes\"],\n    \"businessAddress\": \"Downtown Sports Center, Miami, FL\",\n    \"businessPhone\": \"+1 (305) 555-0188\",\n    \"bio\": \"Professional soccer trainer with 8+ years of experience\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register a new vendor account with the sample data from the attachment"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', response.token);",
+                  "    pm.collectionVariables.set('currentUserId', response.user._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"melissa.peters@soccergym.com\",\n  \"password\": \"SecurePass123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login with email and password"
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Get current user's profile information"
+          }
+        },
+        {
+          "name": "Update Profile",
           "request": {
             "method": "PUT",
             "header": [
@@ -123,27 +190,125 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"profile\": {\n    \"fullName\": \"John Doe Updated\",\n    \"phone\": \"+1987654321\",\n    \"location\": \"Los Angeles, CA\",\n    \"rating\": 4.5\n  }\n}"
+              "raw": "{\n  \"profile\": {\n    \"bio\": \"Updated professional soccer trainer with 10+ years of experience\",\n    \"location\": \"Miami, Florida – Premium Sports Center\",\n    \"rating\": 4.8\n  }\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "raw": "{{baseUrl}}/api/auth/profile",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "{{userId}}"]
+              "path": ["api", "auth", "profile"]
             },
-            "description": "Update an existing user's profile"
+            "description": "Update user profile information"
           }
         },
         {
-          "name": "Delete User",
+          "name": "Change Password",
           "request": {
-            "method": "DELETE",
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SecurePass123\",\n  \"newPassword\": \"NewSecurePass456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "change-password"]
+            },
+            "description": "Change user password"
+          }
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "raw": "{{baseUrl}}/api/auth/verify-token",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "{{userId}}"]
+              "path": ["api", "auth", "verify-token"]
             },
-            "description": "Delete a user account"
+            "description": "Verify if current token is valid"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            },
+            "description": "Logout (client should remove token)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?userType=vendor&verificationStatus=verified&limit=10&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "userType",
+                  "value": "vendor",
+                  "description": "Filter by user type (vendor/customer)"
+                },
+                {
+                  "key": "verificationStatus",
+                  "value": "verified",
+                  "description": "Filter vendors by verification status"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search in names and academy names",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Browse users publicly (no auth required)"
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{vendorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{vendorId}}"]
+            },
+            "description": "Get public profile of a user"
           }
         }
       ]
@@ -154,68 +319,61 @@
         {
           "name": "Get All Events",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/events?status=published&visibility=public&tags=yoga,fitness&startDate=2025-09-01&endDate=2025-09-30&limit=10&page=1",
+              "raw": "{{baseUrl}}/api/events?status=published&visibility=public&tags=soccer,training&startDate=2025-09-01&endDate=2025-12-31&limit=10&page=1",
               "host": ["{{baseUrl}}"],
               "path": ["api", "events"],
               "query": [
                 {
                   "key": "status",
-                  "value": "published",
-                  "description": "Filter by event status (draft/published/cancelled)"
+                  "value": "published"
                 },
                 {
                   "key": "visibility",
-                  "value": "public",
-                  "description": "Filter by visibility (public/unlisted/private)"
+                  "value": "public"
                 },
                 {
                   "key": "tags",
-                  "value": "yoga,fitness",
-                  "description": "Filter by tags (comma-separated)"
+                  "value": "soccer,training"
                 },
                 {
                   "key": "startDate",
-                  "value": "2025-09-01",
-                  "description": "Filter events starting after this date"
+                  "value": "2025-09-01"
                 },
                 {
                   "key": "endDate",
-                  "value": "2025-09-30",
-                  "description": "Filter events starting before this date"
-                },
-                {
-                  "key": "vendorId",
-                  "value": "",
-                  "description": "Filter by vendor ID",
-                  "disabled": true
+                  "value": "2025-12-31"
                 },
                 {
                   "key": "search",
                   "value": "",
-                  "description": "Text search in title, description, and tags",
+                  "description": "Text search",
                   "disabled": true
                 },
                 {
                   "key": "limit",
-                  "value": "10",
-                  "description": "Number of results per page (default: 20)"
+                  "value": "10"
                 },
                 {
                   "key": "page",
-                  "value": "1",
-                  "description": "Page number (default: 1)"
+                  "value": "1"
                 }
               ]
             },
-            "description": "Retrieve all events with filtering and pagination options"
+            "description": "Browse events publicly (no auth required)"
           }
         },
         {
           "name": "Get Event by ID",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -223,11 +381,25 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "events", "{{eventId}}"]
             },
-            "description": "Retrieve a specific event by its ID with vendor details"
+            "description": "Get event details"
           }
         },
         {
-          "name": "Create Event",
+          "name": "Create Event (Vendor Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('eventId', response._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -238,18 +410,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"vendorId\": \"{{vendorId}}\",\n  \"title\": \"Morning Yoga Session\",\n  \"description\": \"Start your day with a relaxing yoga session suitable for all levels\",\n  \"location\": \"Central Park, New York\",\n  \"startsAt\": \"2025-09-15T08:00:00Z\",\n  \"endsAt\": \"2025-09-15T09:30:00Z\",\n  \"capacity\": 25,\n  \"priceCents\": 3000,\n  \"visibility\": \"public\",\n  \"status\": \"published\",\n  \"tags\": [\"yoga\", \"morning\", \"beginner-friendly\"],\n  \"coverUrl\": \"https://example.com/yoga-cover.jpg\"\n}"
+              "raw": "{\n  \"title\": \"Advanced Soccer Training Session\",\n  \"description\": \"Intensive soccer training focusing on dribbling, passing, and shooting techniques. Suitable for intermediate to advanced players.\",\n  \"location\": \"Downtown Sports Center, Miami, FL\",\n  \"startsAt\": \"2025-09-15T18:00:00Z\",\n  \"endsAt\": \"2025-09-15T20:00:00Z\",\n  \"capacity\": 15,\n  \"priceCents\": 4500,\n  \"visibility\": \"public\",\n  \"status\": \"published\",\n  \"tags\": [\"soccer\", \"training\", \"advanced\", \"skills\"],\n  \"coverUrl\": \"https://example.com/soccer-training.jpg\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/events",
               "host": ["{{baseUrl}}"],
               "path": ["api", "events"]
             },
-            "description": "Create a new event"
+            "description": "Create a new event (requires vendor authentication)"
           }
         },
         {
-          "name": "Update Event",
+          "name": "Update Event (Owner Only)",
           "request": {
             "method": "PUT",
             "header": [
@@ -260,18 +432,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Morning Yoga Session\",\n  \"description\": \"Updated description for the yoga session\",\n  \"capacity\": 30,\n  \"priceCents\": 2500,\n  \"status\": \"published\"\n}"
+              "raw": "{\n  \"title\": \"Updated Advanced Soccer Training Session\",\n  \"description\": \"Updated intensive soccer training with new techniques\",\n  \"capacity\": 20,\n  \"priceCents\": 5000\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/events/{{eventId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "events", "{{eventId}}"]
             },
-            "description": "Update an existing event"
+            "description": "Update event (only the vendor who created it)"
           }
         },
         {
-          "name": "Delete Event",
+          "name": "Delete Event (Owner Only)",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -280,7 +452,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "events", "{{eventId}}"]
             },
-            "description": "Delete an event"
+            "description": "Delete event (only the vendor who created it)"
           }
         }
       ]
@@ -289,43 +461,37 @@
       "name": "Bookings",
       "item": [
         {
-          "name": "Get All Bookings",
+          "name": "Get My Bookings",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/bookings?eventId={{eventId}}&userId={{userId}}&status=confirmed&limit=10&page=1",
+              "raw": "{{baseUrl}}/api/bookings?status=confirmed&limit=10&page=1",
               "host": ["{{baseUrl}}"],
               "path": ["api", "bookings"],
               "query": [
                 {
-                  "key": "eventId",
-                  "value": "{{eventId}}",
-                  "description": "Filter by event ID"
-                },
-                {
-                  "key": "userId",
-                  "value": "{{userId}}",
-                  "description": "Filter by user ID"
-                },
-                {
                   "key": "status",
                   "value": "confirmed",
-                  "description": "Filter by booking status (confirmed/waitlisted/cancelled/noshow/checked_in)"
+                  "description": "Filter by booking status"
+                },
+                {
+                  "key": "eventId",
+                  "value": "",
+                  "description": "Filter by specific event",
+                  "disabled": true
                 },
                 {
                   "key": "limit",
-                  "value": "10",
-                  "description": "Number of results per page (default: 20)"
+                  "value": "10"
                 },
                 {
                   "key": "page",
-                  "value": "1",
-                  "description": "Page number (default: 1)"
+                  "value": "1"
                 }
               ]
             },
-            "description": "Retrieve all bookings with filtering options"
+            "description": "Get authenticated user's bookings"
           }
         },
         {
@@ -338,11 +504,25 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "bookings", "{{bookingId}}"]
             },
-            "description": "Retrieve a specific booking by its ID"
+            "description": "Get specific booking details"
           }
         },
         {
           "name": "Book Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('bookingId', response._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -353,14 +533,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"userId\": \"{{userId}}\",\n  \"paymentRef\": \"payment-xyz-789\"\n}"
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"paymentRef\": \"payment-stripe-ch_abc123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/bookings",
               "host": ["{{baseUrl}}"],
               "path": ["api", "bookings"]
             },
-            "description": "Create a new booking for an event. Uses the bookEvent service with automatic capacity management and waitlisting."
+            "description": "Book an event (uses authenticated user's ID)"
           }
         },
         {
@@ -382,7 +562,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "bookings", "{{bookingId}}"]
             },
-            "description": "Update booking status (confirmed/waitlisted/cancelled/noshow/checked_in)"
+            "description": "Update booking status"
           }
         },
         {
@@ -397,14 +577,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"byUserId\": \"{{userId}}\"\n}"
+              "raw": "{\n  \"byUserId\": \"{{currentUserId}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "bookings", "{{bookingId}}"]
             },
-            "description": "Cancel a booking. Uses the cancelBooking service which automatically promotes waitlisted users."
+            "description": "Cancel booking (promotes waitlisted users)"
           }
         }
       ]
@@ -413,56 +593,38 @@
       "name": "Personal Events",
       "item": [
         {
-          "name": "Get Personal Events",
+          "name": "Get My Personal Events",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/personal-events?userId={{userId}}&startDate=2025-09-01&endDate=2025-09-30&limit=10&page=1",
+              "raw": "{{baseUrl}}/api/personal-events?userId={{currentUserId}}&startDate=2025-09-01&endDate=2025-12-31&limit=10&page=1",
               "host": ["{{baseUrl}}"],
               "path": ["api", "personal-events"],
               "query": [
                 {
                   "key": "userId",
-                  "value": "{{userId}}",
-                  "description": "User ID (required)"
+                  "value": "{{currentUserId}}"
                 },
                 {
                   "key": "startDate",
-                  "value": "2025-09-01",
-                  "description": "Filter events starting after this date"
+                  "value": "2025-09-01"
                 },
                 {
                   "key": "endDate",
-                  "value": "2025-09-30",
-                  "description": "Filter events starting before this date"
+                  "value": "2025-12-31"
                 },
                 {
                   "key": "limit",
-                  "value": "10",
-                  "description": "Number of results per page (default: 20)"
+                  "value": "10"
                 },
                 {
                   "key": "page",
-                  "value": "1",
-                  "description": "Page number (default: 1)"
+                  "value": "1"
                 }
               ]
             },
-            "description": "Retrieve personal calendar events for a specific user"
-          }
-        },
-        {
-          "name": "Get Personal Event by ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/personal-events/{{personalEventId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "personal-events", "{{personalEventId}}"]
-            },
-            "description": "Retrieve a specific personal event by its ID"
+            "description": "Get user's personal calendar events"
           }
         },
         {
@@ -477,177 +639,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"title\": \"Doctor Appointment\",\n  \"startsAt\": \"2025-09-20T14:00:00Z\",\n  \"endsAt\": \"2025-09-20T15:00:00Z\",\n  \"notes\": \"Annual checkup with Dr. Smith\"\n}"
+              "raw": "{\n  \"userId\": \"{{currentUserId}}\",\n  \"title\": \"Personal Training Session\",\n  \"startsAt\": \"2025-09-20T16:00:00Z\",\n  \"endsAt\": \"2025-09-20T17:00:00Z\",\n  \"notes\": \"One-on-one training session with focus on ball control\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/personal-events",
               "host": ["{{baseUrl}}"],
               "path": ["api", "personal-events"]
             },
-            "description": "Create a new personal calendar event"
-          }
-        },
-        {
-          "name": "Update Personal Event",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Doctor Appointment\",\n  \"startsAt\": \"2025-09-20T15:00:00Z\",\n  \"endsAt\": \"2025-09-20T16:00:00Z\",\n  \"notes\": \"Rescheduled appointment with Dr. Smith\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/personal-events/{{personalEventId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "personal-events", "{{personalEventId}}"]
-            },
-            "description": "Update an existing personal event"
-          }
-        },
-        {
-          "name": "Delete Personal Event",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/personal-events/{{personalEventId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "personal-events", "{{personalEventId}}"]
-            },
-            "description": "Delete a personal calendar event"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Notifications",
-      "item": [
-        {
-          "name": "Get All Notifications",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/notifications?userId={{userId}}&kind=email&sent=false&limit=10&page=1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications"],
-              "query": [
-                {
-                  "key": "userId",
-                  "value": "{{userId}}",
-                  "description": "Filter by user ID"
-                },
-                {
-                  "key": "kind",
-                  "value": "email",
-                  "description": "Filter by notification type (email/push/sms)"
-                },
-                {
-                  "key": "sent",
-                  "value": "false",
-                  "description": "Filter by sent status (true/false)"
-                },
-                {
-                  "key": "limit",
-                  "value": "10",
-                  "description": "Number of results per page (default: 20)"
-                },
-                {
-                  "key": "page",
-                  "value": "1",
-                  "description": "Page number (default: 1)"
-                }
-              ]
-            },
-            "description": "Retrieve notifications with filtering options"
-          }
-        },
-        {
-          "name": "Get Notification by ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications", "{{notificationId}}"]
-            },
-            "description": "Retrieve a specific notification by its ID"
-          }
-        },
-        {
-          "name": "Create Notification",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"kind\": \"email\",\n  \"payload\": {\n    \"subject\": \"Event Reminder\",\n    \"message\": \"Don't forget about your upcoming yoga class tomorrow!\",\n    \"eventId\": \"{{eventId}}\"\n  },\n  \"scheduledFor\": \"2025-09-14T18:00:00Z\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/notifications",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications"]
-            },
-            "description": "Create a new notification to be sent to a user"
-          }
-        },
-        {
-          "name": "Update Notification",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"scheduledFor\": \"2025-09-14T19:00:00Z\",\n  \"payload\": {\n    \"subject\": \"Updated Event Reminder\",\n    \"message\": \"Reminder: Your yoga class is tomorrow at 9 AM!\",\n    \"eventId\": \"{{eventId}}\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications", "{{notificationId}}"]
-            },
-            "description": "Update an existing notification"
-          }
-        },
-        {
-          "name": "Mark Notification as Sent",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}/mark-sent",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications", "{{notificationId}}", "mark-sent"]
-            },
-            "description": "Mark a notification as sent (updates sentAt timestamp)"
-          }
-        },
-        {
-          "name": "Delete Notification",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications", "{{notificationId}}"]
-            },
-            "description": "Delete a notification"
+            "description": "Create a personal calendar event"
           }
         }
       ]

@@ -2,11 +2,12 @@ import express from 'express';
 import Booking from '../models/Booking.js';
 import { bookEvent } from '../services/bookEvent.js';
 import { cancelBooking } from '../services/cancelBooking.js';
+import { authenticate, requireVendor, optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// GET /api/bookings - Get all bookings with filtering
-router.get('/', async (req, res) => {
+// GET /api/bookings - Get all bookings with filtering (authenticated users only)
+router.get('/', authenticate, async (req, res) => {
   try {
     const { eventId, userId, status, limit = 20, page = 1 } = req.query;
     const filter = {};
@@ -58,15 +59,18 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/bookings - Create new booking (book an event)
-router.post('/', async (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   try {
-    const { eventId, userId, paymentRef } = req.body;
+    const { eventId, paymentRef } = req.body;
     
-    if (!eventId || !userId) {
+    if (!eventId) {
       return res.status(400).json({ 
-        error: 'eventId and userId are required' 
+        error: 'eventId is required' 
       });
     }
+    
+    // Use authenticated user's ID
+    const userId = req.user._id;
     
     const booking = await bookEvent({ eventId, userId, paymentRef });
     
