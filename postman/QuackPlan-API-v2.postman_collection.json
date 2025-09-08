@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "QuackPlan API",
+    "name": "QuackPlan API with Authentication",
     "description": "Complete event planning and booking system API with user registration, login, and role-based access control",
     "version": "2.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
