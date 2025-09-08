@@ -21,7 +21,7 @@ A comprehensive event planning and booking system built with Node.js, Express, a
 
 1. **Clone or navigate to the project directory**:
    ```bash
-   cd d:\\Projects\\quackplan
+   cd d:\Projects\quackplan
    ```
 
 2. **Install dependencies**:
@@ -32,8 +32,12 @@ A comprehensive event planning and booking system built with Node.js, Express, a
 3. **Set up environment variables**:
    Create a `.env` file in the root directory:
    ```env
-   MONGODB_URI=mongodb://localhost:27017/evently
    PORT=3000
+   # Allow your frontend origin(s), comma-separated. Use * only for local dev.
+   CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+   MONGODB_URI=mongodb://localhost:27017/quackplan
+   JWT_SECRET=replace-with-a-strong-secret
+   JWT_EXPIRES_IN=7d
    NODE_ENV=development
    ```
 
@@ -48,6 +52,113 @@ A comprehensive event planning and booking system built with Node.js, Express, a
    # or for development with auto-reload:
    npm run dev
    ```
+
+### Frontend Quickstart (test and integrate fast)
+
+Use this minimal flow to create a user, log in, and call protected APIs from your frontend.
+
+1) Start the API and MongoDB
+```bash
+npm run dev
+# API will print Health URL and port; default http://localhost:3000
+```
+
+2) Register a user (customer or vendor)
+```bash
+curl -s -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user1@example.com",
+    "password": "Str0ngP@ss1",
+    "userType": "customer",
+    "profile": {"fullName": "User One"}
+  }'
+```
+
+3) Login and get JWT
+```bash
+TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user1@example.com", "password": "Str0ngP@ss1"}' \
+  | node -e "process.stdin.on('data',d=>{try{console.log(JSON.parse(d.toString()).token)}catch(e){}})")
+echo $TOKEN
+```
+
+4) Call an authenticated endpoint
+```bash
+curl -s http://localhost:3000/api/auth/me \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+5) Typical frontend request example (fetch)
+```js
+// Login
+const res = await fetch('http://localhost:3000/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'user1@example.com', password: 'Str0ngP@ss1' })
+});
+const { token, user } = await res.json();
+
+// Use token for protected calls
+const me = await fetch('http://localhost:3000/api/auth/me', {
+  headers: { Authorization: `Bearer ${token}` }
+}).then(r => r.json());
+```
+
+6) Creating events (vendor only)
+- Register/login as `userType: "vendor"`
+- Use the token to create an event:
+```bash
+curl -s -X POST http://localhost:3000/api/events \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Morning Yoga",
+    "startsAt": "2025-09-15T08:00:00Z",
+    "endsAt": "2025-09-15T09:00:00Z",
+    "capacity": 20,
+    "visibility": "public",
+    "status": "published"
+  }'
+```
+
+7) Booking an event (customer)
+```bash
+curl -s -X POST http://localhost:3000/api/bookings \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"eventId": "<EVENT_ID_FROM_PREVIOUS_RESPONSE>"}'
+```
+
+Notes:
+- Set `CORS_ORIGINS` to your frontend dev URL (e.g., http://localhost:5173).
+- All protected routes require `Authorization: Bearer <JWT>`.
+- Profile images are served from `/uploads`.
+
+### Quick test with api.js
+
+`api.js` provides a minimal boot for local testing (mounts all routes and serves `/uploads`).
+
+1. Create `.env` (optional; defaults used if missing):
+```env
+PORT=3000
+MONGODB_URI=mongodb://localhost:27017/quackplan
+JWT_SECRET=dev_secret_change_me
+JWT_EXPIRES_IN=7d
+```
+
+2. Run:
+```bash
+node api.js
+```
+
+3. Health:
+```http
+GET /health
+```
+
+> Note: Bookings use MongoDB transactions. Ensure MongoDB runs as a replica set (even single-node RS) for `bookEvent` and `cancelBooking` to work reliably.
 
 ## 🧪 Testing
 
@@ -85,7 +196,7 @@ GET /health
 |--------|----------|-------------|
 | GET | `/api/users` | Get all users with optional filtering |
 | GET | `/api/users/:id` | Get user by ID |
-| POST | `/api/users` | Create new user |
+| POST | `/api/auth/register` | Register new user |
 | PUT | `/api/users/:id` | Update user |
 | DELETE | `/api/users/:id` | Delete user |
 
@@ -94,19 +205,19 @@ GET /health
 - `limit`: Number of results per page (default: 20)
 - `page`: Page number (default: 1)
 
-#### Example User Creation:
+#### Example Registration:
 ```json
 {
-  \"authProviderId\": \"auth-123\",
-  \"profile\": {
-    \"fullName\": \"John Doe\",
-    \"email\": \"john.doe@example.com\",
-    \"phone\": \"+1234567890\",
-    \"dob\": \"1990-01-01\",
-    \"location\": \"New York, NY\",
-    \"isVendor\": true,
-    \"academyName\": \"John's Fitness Studio\",
-    \"specializations\": [\"fitness\", \"yoga\", \"pilates\"]
+  "email": "john.doe@example.com",
+  "password": "Str0ngPass!",
+  "userType": "vendor",
+  "profile": {
+    "fullName": "John Doe",
+    "phone": "+1234567890",
+    "dob": "1990-01-01",
+    "location": "New York, NY",
+    "academyName": "John's Fitness Studio",
+    "specializations": ["fitness", "yoga", "pilates"]
   }
 }
 ```
@@ -134,17 +245,17 @@ GET /health
 #### Example Event Creation:
 ```json
 {
-  \"vendorId\": \"vendor-id-here\",
-  \"title\": \"Morning Yoga Session\",
-  \"description\": \"Start your day with a relaxing yoga session\",
-  \"location\": \"Central Park, New York\",
-  \"startsAt\": \"2025-09-15T08:00:00Z\",
-  \"endsAt\": \"2025-09-15T09:30:00Z\",
-  \"capacity\": 25,
-  \"priceCents\": 3000,
-  \"visibility\": \"public\",
-  \"status\": \"published\",
-  \"tags\": [\"yoga\", \"morning\", \"beginner-friendly\"]
+  "vendorId": "vendor-id-here",
+  "title": "Morning Yoga Session",
+  "description": "Start your day with a relaxing yoga session",
+  "location": "Central Park, New York",
+  "startsAt": "2025-09-15T08:00:00Z",
+  "endsAt": "2025-09-15T09:30:00Z",
+  "capacity": 25,
+  "priceCents": 3000,
+  "visibility": "public",
+  "status": "published",
+  "tags": ["yoga", "morning", "beginner-friendly"]
 }
 ```
 
@@ -172,16 +283,16 @@ GET /health
 #### Example Booking Creation:
 ```json
 {
-  \"eventId\": \"event-id-here\",
-  \"userId\": \"user-id-here\",
-  \"paymentRef\": \"payment-xyz-789\"
+  "eventId": "event-id-here",
+  "userId": "user-id-here",
+  "paymentRef": "payment-xyz-789"
 }
 ```
 
 ### Personal Events API
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/personal-events` | Get personal events (requires userId) |
+| GET | `/api/personal-events` | Get personal events (JWT; owner-only) |
 | GET | `/api/personal-events/:id` | Get personal event by ID |
 | POST | `/api/personal-events` | Create new personal event |
 | PUT | `/api/personal-events/:id` | Update personal event |
@@ -204,16 +315,27 @@ GET /health
 
 ## 📨 Postman Collection
 
-Import the Postman collection and environment files from the `postman/` directory:
+If you prefer Postman, you can use the generated endpoints list from the helper below, or import your own collection.
 
 1. **Collection**: `QuackPlan-API.postman_collection.json`
 2. **Environment**: `QuackPlan-Environment.postman_environment.json`
 
-### How to Import:
+### Alternative: Print endpoints with `api-guide.js`
+
+You can list all available endpoints from the repo without opening Postman:
+```bash
+node api-guide.js
+```
+Set a base URL:
+```bash
+BASE_URL=http://localhost:3000 node api-guide.js
+```
+
+### How to Import Postman files:
 1. Open Postman
-2. Click \"Import\" button
+2. Click "Import" button
 3. Select both JSON files from the `postman/` folder
-4. Set the \"QuackPlan Environment\" as your active environment
+4. Set the "QuackPlan Environment" as your active environment
 5. Update the environment variables with real IDs after creating test data
 
 ## 🗂️ Project Structure

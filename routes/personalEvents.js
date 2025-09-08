@@ -1,17 +1,17 @@
 import express from 'express';
 import PersonalEvent from '../models/PersonalEvent.js';
+import { authenticate } from '../middleware/auth.js';
+import { isSameUserId } from '../utils/authz.js';
+import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 
 const router = express.Router();
 
-// GET /api/personal-events - Get personal events for a user
-router.get('/', async (req, res) => {
+// GET /api/personal-events - Get personal events for the authenticated user
+router.get('/', authenticate, async (req, res) => {
   try {
-    const { userId, startDate, endDate, limit = 20, page = 1 } = req.query;
-    
-    if (!userId) {
-      return res.status(400).json({ error: 'userId is required' });
-    }
-    
+    const { startDate, endDate } = req.query;
+    const { limit, page, skip } = parsePagination(req.query);
+    const userId = req.user._id;
     const filter = { userId };
     
     if (startDate || endDate) {
@@ -20,32 +20,23 @@ router.get('/', async (req, res) => {
       if (endDate) filter.startsAt.$lte = new Date(endDate);
     }
     
-    const skip = (page - 1) * limit;
     const events = await PersonalEvent.find(filter)
       .populate('userId', 'profile.fullName profile.email')
       .select('-__v')
-      .limit(parseInt(limit))
+      .limit(limit)
       .skip(skip)
       .sort({ startsAt: 1 });
     
     const total = await PersonalEvent.countDocuments(filter);
     
-    res.json({
-      events,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    });
+    res.json({ events, pagination: buildPaginationMeta(page, limit, total) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// GET /api/personal-events/:id - Get personal event by ID
-router.get('/:id', async (req, res) => {
+// GET /api/personal-events/:id - Get personal event by ID (owner only)
+router.get('/:id', authenticate, async (req, res) => {
   try {
     const event = await PersonalEvent.findById(req.params.id)
       .populate('userId', 'profile.fullName profile.email')
@@ -54,16 +45,38 @@ router.get('/:id', async (req, res) => {
     if (!event) {
       return res.status(404).json({ error: 'Personal event not found' });
     }
+    if (!isSameUserId(event.userId?._id ?? event.userId, req.user._id)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
     res.json(event);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// POST /api/personal-events - Create new personal event
-router.post('/', async (req, res) => {
+// POST /api/personal-events - Create new personal event (owner is authenticated user)
+router.post('/', authenticate, async (req, res) => {
   try {
-    const event = new PersonalEvent(req.body);
+    const { title, startsAt, endsAt, notes } = req.body;
+    if (!startsAt || !endsAt) {
+      return res.status(400).json({ error: 'startsAt and endsAt are required' });
+    }
+    const start = new Date(startsAt);
+    const end = new Date(endsAt);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format for startsAt or endsAt' });
+    }
+    if (end <= start) {
+      return res.status(400).json({ error: 'endsAt must be after startsAt' });
+    }
+
+    const event = new PersonalEvent({
+      userId: req.user._id,
+      title,
+      startsAt: start,
+      endsAt: end,
+      notes
+    });
     await event.save();
     
     const populatedEvent = await PersonalEvent.findById(event._id)
@@ -75,33 +88,54 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/personal-events/:id - Update personal event
-router.put('/:id', async (req, res) => {
+// PUT /api/personal-events/:id - Update personal event (owner only)
+router.put('/:id', authenticate, async (req, res) => {
   try {
-    const event = await PersonalEvent.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    )
-    .populate('userId', 'profile.fullName profile.email')
-    .select('-__v');
-    
-    if (!event) {
+    const existing = await PersonalEvent.findById(req.params.id);
+    if (!existing) {
       return res.status(404).json({ error: 'Personal event not found' });
     }
+    if (!isSameUserId(existing.userId, req.user._id)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const update = { ...req.body };
+    if (update.startsAt || update.endsAt) {
+      const start = update.startsAt ? new Date(update.startsAt) : new Date(existing.startsAt);
+      const end = update.endsAt ? new Date(update.endsAt) : new Date(existing.endsAt);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return res.status(400).json({ error: 'Invalid date format for startsAt or endsAt' });
+      }
+      if (end <= start) {
+        return res.status(400).json({ error: 'endsAt must be after startsAt' });
+      }
+    }
+
+    const event = await PersonalEvent.findByIdAndUpdate(
+      req.params.id,
+      update,
+      { new: true, runValidators: true }
+    )
+      .populate('userId', 'profile.fullName profile.email')
+      .select('-__v');
+
     res.json(event);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// DELETE /api/personal-events/:id - Delete personal event
-router.delete('/:id', async (req, res) => {
+// DELETE /api/personal-events/:id - Delete personal event (owner only)
+router.delete('/:id', authenticate, async (req, res) => {
   try {
-    const event = await PersonalEvent.findByIdAndDelete(req.params.id);
-    if (!event) {
+    const existing = await PersonalEvent.findById(req.params.id);
+    if (!existing) {
       return res.status(404).json({ error: 'Personal event not found' });
     }
+    if (!isSameUserId(existing.userId, req.user._id)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    await PersonalEvent.findByIdAndDelete(req.params.id);
     res.json({ message: 'Personal event deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -1,23 +1,15 @@
 import express from 'express';
 import Event from '../models/Event.js';
 import { authenticate, requireVendor, optionalAuth } from '../middleware/auth.js';
+import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 
 const router = express.Router();
 
 // GET /api/events - Get all events with filtering
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { 
-      vendorId, 
-      status = 'published', 
-      visibility = 'public', 
-      tags, 
-      search, 
-      startDate, 
-      endDate,
-      limit = 20, 
-      page = 1 
-    } = req.query;
+    const { vendorId, status = 'published', visibility = 'public', tags, search, startDate, endDate } = req.query;
+    const { limit, page, skip } = parsePagination(req.query);
     
     const filter = {};
     
@@ -34,25 +26,16 @@ router.get('/', optionalAuth, async (req, res) => {
       filter.$text = { $search: search };
     }
     
-    const skip = (page - 1) * limit;
     const events = await Event.find(filter)
       .populate('vendorId', 'profile.fullName profile.academyName profile.rating')
       .select('-__v')
-      .limit(parseInt(limit))
+      .limit(limit)
       .skip(skip)
       .sort({ startsAt: 1 });
     
     const total = await Event.countDocuments(filter);
     
-    res.json({
-      events,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    });
+    res.json({ events, pagination: buildPaginationMeta(page, limit, total) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -62,7 +45,7 @@ router.get('/', optionalAuth, async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const event = await Event.findById(req.params.id)
-      .populate('vendorId', 'profile.fullName profile.academyName profile.email profile.phone profile.rating')
+      .populate('vendorId', 'profile.fullName profile.academyName profile.rating')
       .select('-__v');
     
     if (!event) {
@@ -77,9 +60,24 @@ router.get('/:id', async (req, res) => {
 // POST /api/events - Create new event (vendors only)
 router.post('/', authenticate, requireVendor, async (req, res) => {
   try {
+    const { title, startsAt, endsAt } = req.body;
+    if (!startsAt || !endsAt) {
+      return res.status(400).json({ error: 'startsAt and endsAt are required' });
+    }
+    const start = new Date(startsAt);
+    const end = new Date(endsAt);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format for startsAt or endsAt' });
+    }
+    if (end <= start) {
+      return res.status(400).json({ error: 'endsAt must be after startsAt' });
+    }
     // Set the vendorId to the authenticated user's ID
     const eventData = {
       ...req.body,
+      title,
+      startsAt: start,
+      endsAt: end,
       vendorId: req.user._id
     };
     
@@ -111,9 +109,23 @@ router.put('/:id', authenticate, requireVendor, async (req, res) => {
       });
     }
     
+    const update = { ...req.body };
+    if (update.startsAt || update.endsAt) {
+      const start = update.startsAt ? new Date(update.startsAt) : new Date(existingEvent.startsAt);
+      const end = update.endsAt ? new Date(update.endsAt) : new Date(existingEvent.endsAt);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return res.status(400).json({ error: 'Invalid date format for startsAt or endsAt' });
+      }
+      if (end <= start) {
+        return res.status(400).json({ error: 'endsAt must be after startsAt' });
+      }
+      update.startsAt = start;
+      update.endsAt = end;
+    }
+
     const event = await Event.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      update,
       { new: true, runValidators: true }
     )
     .populate('vendorId', 'profile.fullName profile.academyName profile.rating profile.verificationStatus')

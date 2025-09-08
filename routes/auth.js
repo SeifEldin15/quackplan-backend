@@ -9,6 +9,9 @@ import {
   validateProfileUpdate,
   validatePasswordChange 
 } from '../middleware/validation.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 const router = express.Router();
 
@@ -236,3 +239,55 @@ router.get('/verify-token', authenticate, (req, res) => {
 });
 
 export default router;
+
+// Profile picture upload setup and route (placed after export for readability but executed before import consumers)
+const uploadsRoot = path.resolve('uploads');
+const profileDir = path.join(uploadsRoot, 'profiles');
+if (!fs.existsSync(uploadsRoot)) fs.mkdirSync(uploadsRoot);
+if (!fs.existsSync(profileDir)) fs.mkdirSync(profileDir);
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, profileDir);
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `${req.user._id}-${Date.now()}${ext}`);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  const allowed = ['.png', '.jpg', '.jpeg', '.webp'];
+  const ext = path.extname(file.originalname).toLowerCase();
+  const isMimeOk = (file.mimetype || '').startsWith('image/');
+  if (!allowed.includes(ext) || !isMimeOk) {
+    return cb(new Error('Only image files are allowed (.png, .jpg, .jpeg, .webp)'));
+  }
+  cb(null, true);
+};
+
+const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
+
+// PUT /api/auth/profile/picture - Upload or update profile picture
+router.put('/profile/picture', authenticate, upload.single('picture'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const relativePath = path.join('uploads', 'profiles', req.file.filename).replace(/\\/g, '/');
+    const updated = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: { 'profile.profilePicture': `/${relativePath}` } },
+      { new: true }
+    ).select('-password');
+
+    return res.json({
+      message: 'Profile picture updated',
+      user: updated,
+      url: updated.profile?.profilePicture
+    });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
