@@ -11,6 +11,8 @@ import personalEventRoutes from './routes/personalEvents.js';
 import notificationRoutes from './routes/notifications.js';
 import path from 'path';
 import { config } from './config/index.js';
+import paymentsRoutes from './routes/payments.js';
+import { handleStripeWebhook } from './controllers/paymentsController.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -31,6 +33,13 @@ app.use(cors({
   },
   credentials: allowedOrigins.includes('*') ? false : true
 }));
+// Stripe webhook must read the raw body before JSON parser
+app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), (req, res, next) => {
+  // Preserve rawBody for webhook verification
+  req.rawBody = req.body;
+  next();
+}, handleStripeWebhook);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -44,6 +53,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/personal-events', personalEventRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/payments', paymentsRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

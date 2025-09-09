@@ -1,0 +1,410 @@
+{
+  "info": {
+    "_postman_id": "c9c6b4b2-3b0e-4b1f-9b6d-qp-backend",
+    "name": "QuackPlan API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for QuackPlan backend. Set {{baseUrl}} and {{token}}."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "token", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /api/auth/register",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Passw0rd!\",\n  \"userType\": \"customer\",\n  \"profile\": {\n    \"fullName\": \"John Doe\"\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] }
+          }
+        },
+        {
+          "name": "POST /api/auth/login",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Passw0rd!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Save token to collection variable when present",
+                  "try {",
+                  "  const json = pm.response.json();",
+                  "  if (json.token) { pm.collectionVariables.set('token', json.token); }",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/auth/me",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "auth", "me"] }
+          }
+        },
+        {
+          "name": "PUT /api/auth/profile",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"profile\": {\n    \"fullName\": \"John Updated\"\n  }\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/profile", "host": ["{{baseUrl}}"], "path": ["api", "auth", "profile"] }
+          }
+        },
+        {
+          "name": "PUT /api/auth/change-password",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"Passw0rd!\",\n  \"newPassword\": \"NewPassw0rd!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/change-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "change-password"] }
+          }
+        },
+        {
+          "name": "POST /api/auth/logout",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/auth/logout", "host": ["{{baseUrl}}"], "path": ["api", "auth", "logout"] }
+          }
+        },
+        {
+          "name": "GET /api/auth/verify-token",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/auth/verify-token", "host": ["{{baseUrl}}"], "path": ["api", "auth", "verify-token"] }
+          }
+        },
+        {
+          "name": "PUT /api/auth/profile/picture (form-data)",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "picture", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/profile/picture", "host": ["{{baseUrl}}"], "path": ["api", "auth", "profile", "picture"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "GET /api/users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?userType=vendor&search=academy",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                { "key": "userType", "value": "vendor" },
+                { "key": "search", "value": "academy" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/users/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "PUT /api/users/:id",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"profile\": {\n    \"bio\": \"About me...\"\n  }\n}" },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "DELETE /api/users/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "GET /api/events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events?status=published&visibility=public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events"],
+              "query": [
+                { "key": "status", "value": "published" },
+                { "key": "visibility", "value": "public" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/events/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["api", "events", "{{eventId}}"] }
+          }
+        },
+        {
+          "name": "POST /api/events (vendor)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Yoga Class\",\n  \"startsAt\": \"2025-01-01T10:00:00.000Z\",\n  \"endsAt\": \"2025-01-01T11:00:00.000Z\",\n  \"visibility\": \"public\",\n  \"status\": \"published\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/events", "host": ["{{baseUrl}}"], "path": ["api", "events"] }
+          }
+        },
+        {
+          "name": "PUT /api/events/:id (vendor owner)",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated Yoga Class\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["api", "events", "{{eventId}}"] }
+          }
+        },
+        {
+          "name": "DELETE /api/events/:id (vendor owner)",
+          "request": {
+            "method": "DELETE",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["api", "events", "{{eventId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "GET /api/bookings",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/bookings", "host": ["{{baseUrl}}"], "path": ["api", "bookings"] }
+          }
+        },
+        {
+          "name": "GET /api/bookings/:id",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/bookings/{{bookingId}}", "host": ["{{baseUrl}}"], "path": ["api", "bookings", "{{bookingId}}"] }
+          }
+        },
+        {
+          "name": "POST /api/bookings",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"notes\": \"Looking forward!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bookings", "host": ["{{baseUrl}}"], "path": ["api", "bookings"] }
+          }
+        },
+        {
+          "name": "PUT /api/bookings/:id",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"cancelled\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bookings/{{bookingId}}", "host": ["{{baseUrl}}"], "path": ["api", "bookings", "{{bookingId}}"] }
+          }
+        },
+        {
+          "name": "DELETE /api/bookings/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/bookings/{{bookingId}}", "host": ["{{baseUrl}}"], "path": ["api", "bookings", "{{bookingId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Personal Events",
+      "item": [
+        {
+          "name": "GET /api/personal-events",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/personal-events", "host": ["{{baseUrl}}"], "path": ["api", "personal-events"] }
+          }
+        },
+        {
+          "name": "GET /api/personal-events/:id",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/personal-events/{{personalEventId}}", "host": ["{{baseUrl}}"], "path": ["api", "personal-events", "{{personalEventId}}"] }
+          }
+        },
+        {
+          "name": "POST /api/personal-events",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Dentist\",\n  \"startsAt\": \"2025-01-02T09:00:00.000Z\",\n  \"endsAt\": \"2025-01-02T10:00:00.000Z\",\n  \"notes\": \"Bring documents\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/personal-events", "host": ["{{baseUrl}}"], "path": ["api", "personal-events"] }
+          }
+        },
+        {
+          "name": "PUT /api/personal-events/:id",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"notes\": \"Updated notes\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/personal-events/{{personalEventId}}", "host": ["{{baseUrl}}"], "path": ["api", "personal-events", "{{personalEventId}}"] }
+          }
+        },
+        {
+          "name": "DELETE /api/personal-events/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/personal-events/{{personalEventId}}", "host": ["{{baseUrl}}"], "path": ["api", "personal-events", "{{personalEventId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "GET /api/notifications",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/notifications", "host": ["{{baseUrl}}"], "path": ["api", "notifications"] }
+          }
+        },
+        {
+          "name": "GET /api/notifications/:id",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/notifications/{{notificationId}}", "host": ["{{baseUrl}}"], "path": ["api", "notifications", "{{notificationId}}"] }
+          }
+        },
+        {
+          "name": "POST /api/notifications",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Reminder\",\n  \"message\": \"Your event starts soon.\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/notifications", "host": ["{{baseUrl}}"], "path": ["api", "notifications"] }
+          }
+        },
+        {
+          "name": "PUT /api/notifications/:id",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"Updated message\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/notifications/{{notificationId}}", "host": ["{{baseUrl}}"], "path": ["api", "notifications", "{{notificationId}}"] }
+          }
+        },
+        {
+          "name": "DELETE /api/notifications/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/notifications/{{notificationId}}", "host": ["{{baseUrl}}"], "path": ["api", "notifications", "{{notificationId}}"] }
+          }
+        },
+        {
+          "name": "POST /api/notifications/:id/mark-sent",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/notifications/{{notificationId}}/mark-sent", "host": ["{{baseUrl}}"], "path": ["api", "notifications", "{{notificationId}}", "mark-sent"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "POST /api/payments/checkout",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/payments/checkout", "host": ["{{baseUrl}}"], "path": ["api", "payments", "checkout"] }
+          }
+        },
+        {
+          "name": "POST /webhooks/stripe (raw)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{baseUrl}}/webhooks/stripe", "host": ["{{baseUrl}}"], "path": ["webhooks", "stripe"] }
+          },
+          "description": "Stripe webhook endpoint. Use the Stripe CLI to send signed events."
+        }
+      ]
+    }
+  ]
+}
+
+
+
