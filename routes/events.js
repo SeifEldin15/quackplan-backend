@@ -5,6 +5,36 @@ import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 
 const router = express.Router();
 
+// GET /api/events/mine - Get events created by the authenticated vendor
+router.get('/mine', authenticate, requireVendor, async (req, res) => {
+  try {
+    const { status, visibility, startDate, endDate, tags } = req.query;
+    const { limit, page, skip } = parsePagination(req.query);
+    const filter = { vendorId: req.user._id };
+
+    if (status) filter.status = status;
+    if (visibility) filter.visibility = visibility;
+    if (tags) filter.tags = { $in: tags.split(',') };
+    if (startDate || endDate) {
+      filter.startsAt = {};
+      if (startDate) filter.startsAt.$gte = new Date(startDate);
+      if (endDate) filter.startsAt.$lte = new Date(endDate);
+    }
+
+    const events = await Event.find(filter)
+      .populate('vendorId', 'profile.fullName profile.academyName profile.rating')
+      .select('-__v')
+      .limit(limit)
+      .skip(skip)
+      .sort({ startsAt: 1 });
+
+    const total = await Event.countDocuments(filter);
+    res.json({ events, pagination: buildPaginationMeta(page, limit, total) });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/events - Get all events with filtering
 router.get('/', optionalAuth, async (req, res) => {
   try {

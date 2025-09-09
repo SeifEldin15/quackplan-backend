@@ -81,6 +81,8 @@ PUT `/api/users/:id`
 - GET `/api/events` — List events (public)
   - query: `vendorId`, `status`, `visibility`, `tags`, `search`, `startDate`, `endDate`, `limit`, `page`
 - GET `/api/events/:id` — Get event by id (public)
+- GET `/api/events/mine` — List events created by the authenticated vendor (auth vendor)
+  - query: `status`, `visibility`, `tags`, `startDate`, `endDate`, `limit`, `page`
 - POST `/api/events` — Create event (auth vendor)
 - PUT `/api/events/:id` — Update event (auth vendor owner)
 - DELETE `/api/events/:id` — Delete event (auth vendor owner)
@@ -108,10 +110,15 @@ PUT `/api/events/:id`
 { "title": "Updated Yoga Session", "capacity": 30 }
 ```
 
+### My vendor events
+GET `/api/events/mine?status=published&startDate=2025-01-01&limit=20&page=1`
+
 ## Bookings
 - GET `/api/bookings` — List bookings (auth)
   - query: `eventId`, `userId`, `status`, `limit`, `page`
 - GET `/api/bookings/:id` — Get booking (auth)
+- GET `/api/bookings/mine` — List bookings for the authenticated user (auth)
+  - query: `status`, `limit`, `page`
 - POST `/api/bookings` — Create booking (auth)
 - PUT `/api/bookings/:id` — Update booking status (auth)
 - DELETE `/api/bookings/:id` — Cancel booking (auth)
@@ -128,10 +135,15 @@ PUT `/api/bookings/:id`
 { "status": "cancelled" }
 ```
 
+### My bookings
+GET `/api/bookings/mine?status=confirmed&limit=20&page=1`
+
 ## Personal Events
 - GET `/api/personal-events` — List personal events (auth)
 - GET `/api/personal-events/:id` — Get one (auth owner)
 - POST `/api/personal-events` — Create (auth)
+- POST `/api/personal-events/from-event` — Add a published Event to personal calendar (auth)
+- GET `/api/personal-events/overview` — Unified personal view; includes vendor-created Events for vendors (auth)
 - PUT `/api/personal-events/:id` — Update (auth owner)
 - DELETE `/api/personal-events/:id` — Delete (auth owner)
 
@@ -145,6 +157,15 @@ POST `/api/personal-events`
   "notes": "Bring insurance card"
 }
 ```
+
+### Add event to personal calendar
+POST `/api/personal-events/from-event`
+```json
+{ "eventId": "<EVENT_ID>", "notes": "Optional note" }
+```
+
+### Personal overview (merged calendar)
+GET `/api/personal-events/overview?startDate=2025-01-01&endDate=2025-12-31`
 
 ## Notifications
 - GET `/api/notifications` — List notifications (auth owner)

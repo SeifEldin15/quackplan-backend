@@ -1,5 +1,7 @@
 import rateLimit from 'express-rate-limit';
 import Booking from '../models/Booking.js';
+import Event from '../models/Event.js';
+import PersonalEvent from '../models/PersonalEvent.js';
 import { bookEvent } from '../services/bookEvent.js';
 import { cancelBooking } from '../services/cancelBooking.js';
 import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
@@ -76,7 +78,7 @@ export async function updateBooking(req, res) {
     const { status } = req.body;
     if (!status) return res.status(400).json({ error: 'Status is required' });
 
-    const existing = await Booking.findById(req.params.id).populate('eventId', 'vendorId');
+    const existing = await Booking.findById(req.params.id).populate('eventId', 'vendorId title startsAt endsAt');
     if (!existing) return res.status(404).json({ error: 'Booking not found' });
 
     const allowed = ensureOwnerOrVendor(existing.userId, existing.eventId?.vendorId, req.user._id);
@@ -90,6 +92,24 @@ export async function updateBooking(req, res) {
       .populate('eventId', 'title startsAt endsAt location')
       .populate('userId', 'profile.fullName')
       .select('-__v');
+
+    // Sync personal event according to status change
+    try {
+      const evt = await Event.findById(booking.eventId);
+      if (evt) {
+        if (status === 'confirmed') {
+          await PersonalEvent.findOneAndUpdate(
+            { userId: booking.userId, title: evt.title, startsAt: evt.startsAt, endsAt: evt.endsAt },
+            { $setOnInsert: { notes: undefined } },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+          );
+        } else if (['cancelled','waitlisted','noshow'].includes(status)) {
+          await PersonalEvent.findOneAndDelete({ userId: booking.userId, title: evt.title, startsAt: evt.startsAt, endsAt: evt.endsAt });
+        }
+      }
+    } catch (_) {
+      // best-effort: do not fail booking update on personal event sync issues
+    }
 
     res.json(booking);
   } catch (error) {
