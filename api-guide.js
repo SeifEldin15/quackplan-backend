@@ -13,22 +13,7 @@ const endpoints = [
     description: 'API health check',
   },
 
-  // Payments
-  {
-    group: 'Payments',
-    method: 'POST',
-    url: `${BASE_URL}/api/payments/checkout`,
-    auth: 'Bearer JWT',
-    description: 'Create Stripe Checkout session (or immediate booking for free events)',
-    body: { eventId: 'string (required)' }
-  },
-  {
-    group: 'Payments',
-    method: 'POST',
-    url: `${BASE_URL}/webhooks/stripe`,
-    auth: 'none',
-    description: 'Stripe webhook endpoint (verifies signature and confirms booking)'
-  },
+  // Payments removed
 
   // Authentication
   {
@@ -219,7 +204,7 @@ const endpoints = [
     url: `${BASE_URL}/api/bookings`,
     auth: 'Bearer JWT',
     description: 'Create booking for authenticated user',
-    body: { eventId: 'string (required)', paymentRef: 'string (optional)' }
+    body: { eventId: 'string (required)' }
   },
   {
     group: 'Bookings',

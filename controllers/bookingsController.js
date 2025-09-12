@@ -58,11 +58,11 @@ export async function getBooking(req, res) {
 
 export async function createBooking(req, res) {
   try {
-    const { eventId, paymentRef } = req.body;
+    const { eventId } = req.body;
     if (!eventId) return res.status(400).json({ error: 'eventId is required' });
 
     const userId = req.user._id;
-    const booking = await bookEvent({ eventId, userId, paymentRef });
+    const booking = await bookEvent({ eventId, userId });
     const populated = await Booking.findById(booking._id)
       .populate('eventId', 'title startsAt endsAt location priceCents')
       .populate('userId', 'profile.fullName');

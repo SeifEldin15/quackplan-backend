@@ -3,7 +3,7 @@ import Event from "../models/Event.js";
 import Booking from "../models/Booking.js";
 import PersonalEvent from "../models/PersonalEvent.js";
 
-export async function bookEvent({ eventId, userId, paymentRef }) {
+export async function bookEvent({ eventId, userId }) {
   const session = await mongoose.startSession();
   return await session.withTransaction(async () => {
     const event = await Event.findById(eventId).session(session).exec();
@@ -25,9 +25,7 @@ export async function bookEvent({ eventId, userId, paymentRef }) {
     const confirmedCount = await Booking.countDocuments({ eventId, status: "confirmed" }).session(session);
     const status = confirmedCount < event.capacity ? "confirmed" : "waitlisted";
 
-    const booking = await Booking.create([{
-      eventId, userId, status, paymentRef
-    }], { session });
+    const booking = await Booking.create([{ eventId, userId, status }], { session });
 
     if (status === "confirmed") {
       await PersonalEvent.findOneAndUpdate(

@@ -375,36 +375,10 @@
           }
         }
       ]
-    },
-    {
-      "name": "Payments",
-      "item": [
-        {
-          "name": "POST /api/payments/checkout",
-          "request": {
-            "method": "POST",
-            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" } ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"bookingId\": \"{{bookingId}}\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/api/payments/checkout", "host": ["{{baseUrl}}"], "path": ["api", "payments", "checkout"] }
-          }
-        },
-        {
-          "name": "POST /webhooks/stripe (raw)",
-          "request": {
-            "method": "POST",
-            "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "body": { "mode": "raw", "raw": "{}" },
-            "url": { "raw": "{{baseUrl}}/webhooks/stripe", "host": ["{{baseUrl}}"], "path": ["webhooks", "stripe"] }
-          },
-          "description": "Stripe webhook endpoint. Use the Stripe CLI to send signed events."
-        }
-      ]
     }
   ]
 }
+
 
 
 
