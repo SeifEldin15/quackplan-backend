@@ -284,8 +284,7 @@ GET /health
 ```json
 {
   "eventId": "event-id-here",
-  "userId": "user-id-here",
-  "paymentRef": "payment-xyz-789"
+  "userId": "user-id-here"
 }
 ```
 

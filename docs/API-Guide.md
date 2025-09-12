@@ -126,7 +126,7 @@ GET `/api/events/mine?status=published&startDate=2025-01-01&limit=20&page=1`
 ### Create booking
 POST `/api/bookings`
 ```json
-{ "eventId": "<eventId>", "userId": "<userId>", "paymentRef": "pay_123" }
+{ "eventId": "<eventId>", "userId": "<userId>" }
 ```
 
 ### Update booking status
