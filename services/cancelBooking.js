@@ -18,6 +18,15 @@ export async function cancelBooking({ bookingId, byUserId }) {
       );
     }
 
+    // Remove user's personal event for this booking if it exists
+    const evt = await Event.findById(b.eventId).session(session);
+    if (evt) {
+      await PersonalEvent.findOneAndDelete(
+        { userId: b.userId, title: evt.title, startsAt: evt.startsAt, endsAt: evt.endsAt },
+        { session }
+      );
+    }
+
     const candidate = await Booking.findOne({
       eventId: b.eventId, status: "waitlisted"
     }).sort({ createdAt: 1 }).session(session);

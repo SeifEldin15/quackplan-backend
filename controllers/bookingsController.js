@@ -59,6 +59,7 @@ export async function getBooking(req, res) {
 export async function createBooking(req, res) {
   try {
     const { eventId } = req.body;
+<<<<<<< HEAD
     const userId = req.user._id;
 
     // Check if booking already exists for this user and event
@@ -79,6 +80,18 @@ export async function createBooking(req, res) {
     const savedBooking = await booking.save();
     res.status(201).json(savedBooking);
   } catch (error) {
+=======
+    if (!eventId) return res.status(400).json({ error: 'eventId is required' });
+
+    const userId = req.user._id;
+    const booking = await bookEvent({ eventId, userId });
+    const populated = await Booking.findById(booking._id)
+      .populate('eventId', 'title startsAt endsAt location priceCents')
+      .populate('userId', 'profile.fullName');
+    res.status(201).json(populated);
+  } catch (error) {
+    if (error.message === 'Event unavailable') return res.status(400).json({ error: error.message });
+>>>>>>> b59362a7322d1e813d3d6ff22e5a1faa5eb2bb95
     res.status(500).json({ error: error.message });
   }
 }

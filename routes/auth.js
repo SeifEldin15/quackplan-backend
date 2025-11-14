@@ -12,8 +12,11 @@ import {
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+<<<<<<< HEAD
 import crypto from 'crypto'; 
 import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/emailService.js';
+=======
+>>>>>>> b59362a7322d1e813d3d6ff22e5a1faa5eb2bb95
 
 const router = express.Router();
 
