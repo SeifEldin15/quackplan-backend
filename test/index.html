@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مرجع Kubernetes الاحترافي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            color: #334155; /* slate-700 */
+        }
+        .prose {
+            color: #334155;
+        }
+        .prose h1, .prose h2, .prose h3, .prose h4 {
+            color: #0f172a; /* slate-900 */
+            border-bottom: 1px solid #e2e8f0; /* slate-200 */
+            padding-bottom: 0.5rem;
+        }
+        .prose strong {
+            color: #0f172a;
+        }
+        .prose code {
+            background-color: #e2e8f0; /* slate-200 */
+            color: #be185d; /* pink-700 */
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            border-radius: 6px;
+        }
+        .sidebar-link.active {
+            color: #0ea5e9; /* sky-500 */
+            font-weight: 600;
+        }
+         .sidebar-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .toc-link.active {
+            color: #0ea5e9; /* sky-500 */
+            font-weight: 600;
+            border-right: 2px solid #0ea5e9;
+        }
+        .toc-link {
+             transition: all 0.2s ease-in-out;
+             border-right: 2px solid transparent;
+        }
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .nav-item.open > .submenu {
+             max-height: 1000px; /* arbitrary large value */
+        }
+        .nav-item > .nav-header .icon {
+            transition: transform 0.3s ease;
+        }
+        .nav-item.open > .nav-header .icon {
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-20">
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+             <div class="flex items-center space-x-4">
+                <svg class="h-8 w-auto text-sky-500" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M601 40L92 250v240l222 128v264l-222 128v240l509 290 509-290v-240l-222-128V618l222-128V250L601 40z" fill="currentColor"/></svg>
+                <h1 class="text-xl font-bold text-slate-800">مرجع Kubernetes</h1>
+             </div>
+        </div>
+    </header>
+
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="lg:flex">
+            <!-- Left Sidebar Navigation -->
+            <aside class="w-full lg:w-1/5 lg:block sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pr-4 border-l border-slate-200">
+                <nav id="main-nav" class="space-y-1"></nav>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="w-full lg:w-3/5 py-8 lg:px-12 prose prose-lg max-w-none">
+                
+
+                <article id="unit2">
+                    <h2 class="!text-3xl !font-bold">هيكل الكلاستر (Cluster Architecture)</h2>
+                    <p>يتكون أي كلاستر Kubernetes من مكونين أساسيين: مجموعة من الخوادم العاملة تسمى <strong>Nodes</strong>، و <strong>Control Plane</strong> الذي يقوم بإدارتها.</p>
+
+                    <h3 id="unit2-control-plane">2.1 مستوى التحكم (The Control Plane)</h3>
+                    <p>هو "دماغ" الكلاستر المسؤول عن إدارة حالة الكلاستر واتخاذ القرارات العامة. يتكون من عدة مكونات تعمل معًا على خوادم الـ master.</p>
+                    
+                    <h3 id="unit2-nodes">2.2 العُقد (Nodes)</h3>
+                    <p>هي الخوادم العاملة (worker machines) التي تقوم بتشغيل حاويات التطبيقات كـ Pods. كل Node يحتوي على الخدمات اللازمة لإدارة الشبكات والتواصل مع الـ Control Plane.</p>
+                    
+                    <h3 id="unit2-addons">2.3 الإضافات (Addons)</h3>
+                    <p>هي موارد Kubernetes (مثل Deployments و Services) توفر ميزات ووظائف إضافية للكلاستر، مثل خدمة DNS الداخلية أو واجهة المستخدم الرسومية (Dashboard).</p>
+                </article>
+
+                <hr class="my-12 border-slate-200">
+                
+                 <article id="unit3">
+                    <h2 class="!text-3xl !font-bold">أعباء العمل (Workloads)</h2>
+                    <p>أعباء العمل هي كائنات (Objects) تستخدم لإنشاء وإدارة التطبيقات المختلفة على الكلاستر.</p>
+                    <h3 id="unit3-pods">3.1 Pods</h3>
+                     <p>الـ <strong>Pod</strong> هو أصغر وأبسط وحدة بناء في Kubernetes. يمثل مجموعة من حاوية واحدة أو أكثر تعمل معًا على نفس الـ Node.</p>
+                    <h3 id="unit3-controllers">3.2 Controllers</h3>
+                    <p>تقوم وحدات التحكم بإدارة مجموعة من الـ Pods نيابة عنك لضمان تحقيق الحالة المطلوبة.</p>
+                 </article>
+                 
+                 <hr class="my-12 border-slate-200">
+
+                 <article id="unit4">
+                    <h2 class="!text-3xl !font-bold">الخدمات والشبكات</h2>
+                     <h3 id="unit4-services">4.1 Services</h3>
+                     <p>يقوم الـ <strong>Service</strong> بتعريف مجموعة منطقية من الـ Pods ويوفر سياسة للوصول إليها، مما يوفر نقطة وصول (endpoint) ثابتة وموثوقة.</p>
+                     <h3 id="unit4-ingress">4.2 Ingress</h3>
+                      <p>يقوم بإدارة الوصول الخارجي إلى الـ Services داخل الكلاستر، عادةً عبر HTTP و HTTPS.</p>
+                 </article>
+                 
+                 <hr class="my-12 border-slate-200">
+
+                 <article id="unit5">
+                    <h2 class="!text-3xl !font-bold">التخزين والإعدادات</h2>
+                     <h3 id="unit5-storage">5.1 التخزين (Storage)</h3>
+                     <p>يوفر Kubernetes نظامًا لإدارة التخزين الدائم (Persistent Storage) للتطبيقات عبر كائنات مثل <strong>PersistentVolume</strong> و <strong>PersistentVolumeClaim</strong>.</p>
+                      <h3 id="unit5-config">5.2 الإعدادات (Configuration)</h3>
+                      <p>يوفر Kubernetes طرقًا لفصل إعدادات التطبيق عن كود الحاوية باستخدام <strong>ConfigMaps</strong> للمعلومات العامة و <strong>Secrets</strong> للمعلومات الحساسة.</p>
+                 </article>
+
+            </main>
+
+            <!-- Right Sidebar TOC -->
+            <aside class="w-1/5 hidden lg:block sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pl-4">
+                 <div class="space-y-2">
+                    <ul id="toc-nav" class="space-y-2">
+                        <!-- TOC links will be generated here -->
+                    </ul>
+                </div>
+            </aside>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mainNav = document.getElementById('main-nav');
+
+            const navStructure = [
+                {
+                    title: 'المفاهيم (Concepts)',
+                    children: [
+                        {
+                            title: 'نظرة عامة',
+                            id: 'unit1',
+                            children: [
+                                { title: '1.1 المشكلة', id: 'unit1-problem' },
+                                { title: '1.2 الحل', id: 'unit1-solution' },
+                                { title: '1.3 الفلسفة', id: 'unit1-philosophy' },
+                            ]
+                        },
+                        {
+                            title: 'هيكل الكلاستر',
+                            id: 'unit2',
+                            children: [
+                                { title: '2.1 مستوى التحكم', id: 'unit2-control-plane' },
+                                { title: '2.2 العُقد', id: 'unit2-nodes' },
+                                { title: '2.3 الإضافات', id: 'unit2-addons' },
+                            ]
+                        },
+                        {
+                            title: 'أعباء العمل',
+                            id: 'unit3',
+                            children: [
+                                { title: '3.1 Pods', id: 'unit3-pods' },
+                                { title: '3.2 Controllers', id: 'unit3-controllers' },
+                            ]
+                        },
+                         {
+                            title: 'الشبكات',
+                            id: 'unit4',
+                            children: [
+                                { title: '4.1 Services', id: 'unit4-services' },
+                                { title: '4.2 Ingress', id: 'unit4-ingress' },
+                            ]
+                        },
+                        {
+                            title: 'التخزين والإعدادات',
+                            id: 'unit5',
+                            children: [
+                                { title: '5.1 التخزين', id: 'unit5-storage' },
+                                { title: '5.2 الإعدادات', id: 'unit5-config' },
+                            ]
+                        }
+                    ]
+                }
+            ];
+
+            function createNavItem(item) {
+                const navItem = document.createElement('div');
+                navItem.className = 'nav-item';
+
+                const navHeader = document.createElement('div');
+                navHeader.className = 'nav-header flex justify-between items-center cursor-pointer p-2 rounded hover:bg-slate-100';
+                
+                const titleElement = item.children ? document.createElement('h3') : document.createElement('a');
+                if(item.id && titleElement.tagName === 'A') {
+                    titleElement.href = `#${item.id}`;
+                }
+                titleElement.className = `sidebar-link ${item.children ? 'font-bold text-slate-800' : 'text-slate-600 hover:text-sky-500'}`;
+                titleElement.textContent = item.title;
+                
+                navHeader.appendChild(titleElement);
+
+                if (item.children) {
+                    const icon = document.createElement('span');
+                    icon.className = 'icon text-slate-500';
+                    icon.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>`;
+                    navHeader.appendChild(icon);
+
+                    const subMenu = document.createElement('ul');
+                    subMenu.className = 'submenu pr-2 mt-2 space-y-1';
+                    item.children.forEach(child => {
+                        const childNavItem = createNavItem(child);
+                        // Adjust child links to be smaller
+                        childNavItem.querySelector('a')?.classList.add('text-sm');
+                         childNavItem.querySelector('h3')?.classList.add('text-sm');
+                        subMenu.appendChild(childNavItem);
+                    });
+                    navItem.appendChild(navHeader);
+                    navItem.appendChild(subMenu);
+                } else {
+                     navItem.appendChild(navHeader);
+                }
+                
+                return navItem;
+            }
+
+            navStructure.forEach(item => {
+                mainNav.appendChild(createNavItem(item));
+            });
+            
+            // Left Sidebar Accordion
+            const navItems = document.querySelectorAll('#main-nav .nav-item');
+            navItems.forEach(item => {
+                const header = item.querySelector('.nav-header');
+                if (header && item.querySelector('.submenu')) {
+                    header.addEventListener('click', (event) => {
+                        if (event.target.tagName.toLowerCase() !== 'a') {
+                             item.classList.toggle('open');
+                        }
+                    });
+                }
+            });
+
+            // Right Sidebar TOC Generator & Scroll Spy
+            const content = document.querySelector('main');
+            const tocNav = document.getElementById('toc-nav');
+            const headings = content.querySelectorAll('h2, h3');
+            const tocLinks = [];
+
+            // Scroll Spy
+            const observer = new IntersectionObserver(entries => {
+                let visibleIds = [];
+                 entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        visibleIds.push(entry.target.getAttribute('id'));
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                });
+                
+                if(visibleIds.length > 0){
+                   const activeLink = document.querySelector(`.toc-link[href="#${visibleIds[0]}"]`);
+                   if(activeLink) activeLink.classList.add('active');
+                }
+
+            }, { rootMargin: "0px 0px -80% 0px" });
+
+            headings.forEach(heading => {
+                observer.observe(heading);
+            });
+        });
+    </script>
+
+</body>
+</html>
+

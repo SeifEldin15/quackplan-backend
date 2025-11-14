@@ -1,13 +1,16 @@
 import express from 'express';
 import User from '../models/User.js';
 import { authenticate, requireVendor, optionalAuth } from '../middleware/auth.js';
+import { isSameUserId } from '../utils/authz.js';
+import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 
 const router = express.Router();
 
 // GET /api/users - Get all users (public endpoint for browsing vendors/users)
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { userType, isVendor, verificationStatus, limit = 20, page = 1, search } = req.query;
+    const { userType, isVendor, verificationStatus, search } = req.query;
+    const { limit, page, skip } = parsePagination(req.query);
     const filter = { isActive: true };
     
     // Filter by user type
@@ -33,10 +36,9 @@ router.get('/', optionalAuth, async (req, res) => {
       ];
     }
     
-    const skip = (page - 1) * limit;
     const users = await User.find(filter)
       .select('-password -__v -emailVerificationToken -passwordResetToken -authProviderId')
-      .limit(parseInt(limit))
+      .limit(limit)
       .skip(skip)
       .sort({ 'profile.rating': -1, createdAt: -1 });
     
@@ -44,12 +46,7 @@ router.get('/', optionalAuth, async (req, res) => {
     
     res.json({
       users,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
-      }
+      pagination: buildPaginationMeta(page, limit, total)
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -68,32 +65,28 @@ router.get('/:id', optionalAuth, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Hide sensitive info unless it's the user's own profile
+    // Convert to plain object to safely remove fields
+    const userObj = user.toObject();
     if (!req.user || req.user._id.toString() !== user._id.toString()) {
-      delete user.email;
-      delete user.profile.phone;
-      delete user.profile.businessPhone;
+      delete userObj.email;
+      if (userObj.profile) {
+        delete userObj.profile.phone;
+        delete userObj.profile.businessPhone;
+      }
     }
-    
-    res.json(user);
+    res.json(userObj);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// POST /api/users - Create user (deprecated - use /api/auth/register instead)
-router.post('/', async (req, res) => {
-  res.status(410).json({ 
-    error: 'This endpoint is deprecated. Please use /api/auth/register instead.',
-    code: 'DEPRECATED_ENDPOINT'
-  });
-});
+// Removed deprecated POST /api/users. Please use /api/auth/register instead.
 
 // PUT /api/users/:id - Update user (admin only or self)
 router.put('/:id', authenticate, async (req, res) => {
   try {
     // Users can only update their own profile, unless they're admin (future feature)
-    if (req.user._id.toString() !== req.params.id) {
+    if (!isSameUserId(req.user._id, req.params.id)) {
       return res.status(403).json({ 
         error: 'Access denied. You can only update your own profile.',
         code: 'UNAUTHORIZED_UPDATE'
@@ -119,7 +112,7 @@ router.put('/:id', authenticate, async (req, res) => {
 router.delete('/:id', authenticate, async (req, res) => {
   try {
     // Users can only deactivate their own account, unless they're admin (future feature)
-    if (req.user._id.toString() !== req.params.id) {
+    if (!isSameUserId(req.user._id, req.params.id)) {
       return res.status(403).json({ 
         error: 'Access denied. You can only deactivate your own account.',
         code: 'UNAUTHORIZED_DELETE'

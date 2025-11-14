@@ -1,3 +1,4 @@
+// models/User.js
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 
@@ -47,12 +48,10 @@ const UserSchema = new Schema({
   isEmailVerified: { type: Boolean, default: false },
   emailVerificationToken: String,
   passwordResetToken: String,
+  emailVerificationTokenExpires: Date, 
   passwordResetExpires: Date,
   lastLogin: Date,
   isActive: { type: Boolean, default: true },
-  
-  // Legacy field for backward compatibility
-  authProviderId: { type: String, index: true },
   
   profile: ProfileSchema,
 }, { timestamps: true });
